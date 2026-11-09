@@ -24,3 +24,27 @@
   FAILED: test_api_missing_fields — AssertionError: 500 != 400
   FAILED: test_calculate_fee_gbp — no such test exists (coverage gap)
   FAILED: test_process_duplicate — no such test exists (coverage gap)
+
+# TRIAGE LIST
+#
+# CRITICAL — Fix first (financial loss)
+# - Reject negative payout amounts before they reach the database or processing;
+#   negative payouts currently credit the merchant instead of debiting them.
+# - Fix calculate_fee for GBP so it returns a valid fee rather than None, which
+#   causes a TypeError during net-amount calculation.
+#
+# HIGH — Fix next (service availability)
+# - Validate required fields in POST /payouts and return HTTP 400 instead of
+#   crashing with a KeyError when fields such as currency are missing.
+# - Resolve the 'amount'/'amt' key mismatch in
+#   GET /merchants/<id>/payouts to prevent the KeyError.
+#
+# MEDIUM — Fix after (test reliability)
+# - Address the reported test failures: test_api_merchant_payouts and
+#   test_api_missing_fields.
+# - Add tests for GBP fee calculation and duplicate payout processing;
+#   these are currently coverage gaps, not executed failing tests.
+#
+# LOW — Fix last (code quality)
+# - Standardize amount key naming ('amt' vs 'amount') across the model and API.
+# - Add idempotency to process_payout to prevent duplicate processing.
