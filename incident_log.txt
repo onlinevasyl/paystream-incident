@@ -36,8 +36,8 @@
 # HIGH — Fix next (service availability)
 # - Validate required fields in POST /payouts and return HTTP 400 instead of
 #   crashing with a KeyError when fields such as currency are missing.
-# - Resolve the 'amount'/'amt' key mismatch in
-#   GET /merchants/<id>/payouts to prevent the KeyError.
+# - RESOLVED: Standardized the payout amount key to 'amount' in the model,
+#   processing, API aggregation, and tests.
 #
 # MEDIUM — Fix after (test reliability)
 # - Address the reported test failures: test_api_merchant_payouts and
@@ -46,5 +46,5 @@
 #   these are currently coverage gaps, not executed failing tests.
 #
 # LOW — Fix last (code quality)
-# - Standardize amount key naming ('amt' vs 'amount') across the model and API.
+# - RESOLVED: Standardized amount key naming to 'amount' across the codebase.
 # - Add idempotency to process_payout to prevent duplicate processing.

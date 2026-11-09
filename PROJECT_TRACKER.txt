@@ -1,0 +1,77 @@
+PayStream Project Bugs, Fixes, and Improvements Tracker
+=======================================================
+
+Status definitions: OPEN = not implemented; DONE = implemented but may still
+need automated test verification; BLOCKED = verification could not run.
+
+BUGS
+----
+
+ID     Priority   Status   Issue
+B-001  CRITICAL   DONE     create_payout accepted zero and negative amounts,
+                            allowing an invalid payout to reach processing.
+                            Validation now rejects amount <= 0 with ValueError.
+                            See payout_models.py.
+
+B-002  CRITICAL   DONE     calculate_fee now raises ValueError for unsupported
+                            currencies instead of returning None.
+                            process_payout propagates a clear processing error,
+                            and the process endpoint returns HTTP 400.
+                            See payout_models.py and payout_api.py.
+
+B-003  HIGH       DONE     POST /payouts could return 500 for missing required
+                            fields. The endpoint now returns HTTP 400 for
+                            missing fields and model validation errors.
+                            See payout_api.py.
+
+B-004  HIGH       DONE     Standardized the payout amount key to "amount" in
+                            the model, processing logic, and API aggregation,
+                            fixing the merchant payout total KeyError.
+                            See payout_api.py and payout_models.py.
+
+B-005  CRITICAL   DONE     process_payout now rejects non-positive amounts and
+                            returns completed payouts without processing them
+                            again, preventing duplicate financial effects.
+                            See payout_models.py.
+
+B-006  HIGH       DONE     create_payout now rejects unsupported currencies
+                            before storing a payout.
+                            See payout_models.py.
+
+FIXES
+-----
+
+ID     Status   Change
+F-001  DONE     Added create_payout validation rejecting amount <= 0 with a
+                 clear ValueError.
+F-002  DONE     Added create_payout validation rejecting None, empty, or
+                 whitespace-only merchant_id with a clear ValueError.
+F-003  DONE     POST /payouts catches ValueError and returns HTTP 400 with the
+                 validation message. It also returns HTTP 400 for missing
+                 required request fields.
+F-004  DONE     calculate_fee raises ValueError for unsupported currencies;
+                 process_payout adds context without mutating payout state,
+                 and POST /payouts/<id>/process returns HTTP 400.
+F-005  DONE     Added processing-time amount validation and idempotent handling
+                 for already completed payouts.
+F-006  DONE     create_payout rejects unsupported currencies before appending
+                 a payout.
+
+IMPROVEMENTS AND FOLLOW-UP
+--------------------------
+
+ID     Priority   Status    Action
+I-001  MEDIUM     DONE      Added model and API regression tests for
+                             non-positive amounts and invalid merchant IDs.
+I-002  MEDIUM     DONE      Added tests for GBP rejection and API 400 responses.
+I-003  MEDIUM     DONE      Added duplicate-processing and processing-time
+                             amount validation tests.
+I-004  LOW        DONE      Standardized the payout amount key as "amount"
+                             across model, API, and tests.
+I-005  MEDIUM     DONE      python -m pytest test_payouts.py -v completed:
+                             25 passed.
+
+Notes
+-----
+- The incident log's four failing items included two actual failures and two
+  missing-test/coverage-gap entries. Regression coverage has now been added.

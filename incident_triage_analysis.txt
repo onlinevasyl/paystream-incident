@@ -1,0 +1,19 @@
+Incident Triage Analysis
+Source: incident_log.txt cross-referenced with payout_api.py and payout_models.py
+
+| Log entry / error | Exact code line(s) | Root cause | Suggested severity |
+|---|---|---|---|
+| POST /payouts: KeyError: 'currency' | payout_api.py:17 | The handler reads data["currency"] without checking that the request includes the required field, so the missing key raises an unhandled KeyError. | HIGH |
+| GET /merchants/M2201/payouts: KeyError: 'amount' | payout_api.py:44; payout_models.py:12 | At incident time, the API read p["amount"] while records stored "amt"; this mismatch has since been fixed by standardizing on "amount". | HIGH |
+| Payout created with negative amount | payout_models.py:8-19, especially line 12 | create_payout stores any supplied amount without validating that it is positive. | CRITICAL |
+| GBP calculate_fee returned None; net amount raises TypeError | payout_models.py:51-57 and 43-45 | calculate_fee handles USD and EUR only; GBP falls through with an implicit None return, which is then subtracted from the amount. | CRITICAL |
+| Negative payout processed and credited merchant | payout_models.py:12, 38-47, especially line 45 | Negative amounts are accepted at creation and process_payout calculates a negative net amount without rejecting it. | CRITICAL |
+| test_api_merchant_payouts failure (KeyError: 'amount') | payout_api.py:44; payout_models.py:12 | This recorded test failure came from the same historical key mismatch; code and assertion now consistently use "amount". | HIGH |
+| test_api_missing_fields failure (expected 400, got 500) | payout_api.py:12-18, especially lines 15-17 | Required fields are accessed directly without validation or a client-error response; missing request keys cause an unhandled KeyError. | HIGH |
+| test_calculate_fee_gbp: no test exists (coverage gap) | payout_models.py:51-57 | The fee function has no GBP case, and the test suite does not cover this currency; the runtime GBP error is the resulting defect. | MEDIUM |
+| test_process_duplicate: no test exists (coverage gap) | payout_models.py:38-47, especially line 42 | There is no test for repeated processing, and process_payout does not check whether the payout is already completed. | LOW |
+
+Test-run note: The log reports four failed items, but two are actual failing tests and two are missing-test/coverage-gap entries. The API test failures duplicate the corresponding runtime errors above.
+
+Current status: The historical amount-key mismatch has been fixed. Payout records,
+processing, API aggregation, and test assertions now use "amount".
